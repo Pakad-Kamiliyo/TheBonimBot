@@ -15,7 +15,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Message, CallbackQuery, ChatMemberUpdated
 from keyboards import (
     get_start_keyboard, get_back_keyboard, get_add_product_keyboard,
-    get_summary_keyboard
+    get_summary_keyboard, get_product_selection_keyboard
 )
 from states import OrderStates
 
@@ -259,7 +259,7 @@ async def continue_to_payment(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
         f"📝 שלב 6/8: חלוקה לתשלום\n\n"
         f"💰 סה\"כ לתשלום: {grand_total:,} ₪\n\n"
-        "💵 אנא הכניסו את הסכום:",
+        "💵 אנא הכניסו את הסכום במזומן:",
         reply_markup=get_back_keyboard()
     )
 
