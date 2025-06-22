@@ -259,7 +259,7 @@ async def continue_to_payment(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
         f"📝 שלב 6/8: חלוקה לתשלום\n\n"
         f"💰 סה\"כ לתשלום: {grand_total:,} ₪\n\n"
-        "💵 אנא הכניסו את הסכומן:",
+        "💵 אנא הכניסו את הסכום:",
         reply_markup=get_back_keyboard()
     )
 
@@ -284,7 +284,7 @@ async def process_cash_amount(message: Message, state: FSMContext):
         
     except ValueError:
         await message.answer(
-            "❌ אנא הכניסו מספר תקין עבור הסכומן:",  # תוקן מ"הסכומן"
+            "❌ אנא הכניסו מספר תקין עבור הסכום:",  # תוקן מ"הסכומן"
             reply_markup=get_back_keyboard()
         )
 
@@ -322,7 +322,7 @@ async def process_credit_amount(message: Message, state: FSMContext):
         
     except ValueError:
         await message.answer(
-            "❌ אנא הכניסו מספר תקין עבור הסכומן באשראי:",
+            "❌ אנא הכניסו מספר תקין עבור הסכום באשראי:",
             reply_markup=get_back_keyboard()
         )
 
@@ -468,7 +468,7 @@ async def handle_back(callback: CallbackQuery, state: FSMContext):
         await callback.message.edit_text(
             f"📝 שלב 6/8: חלוקה לתשלום\n\n"
             f"💰 סה\"כ לתשלום: {grand_total:,} ₪\n\n"
-            "💵 אנא הכניסו את הסכומן:",  # תוקן מ"סכומן" ל"סכום במזומן"
+            "💵 אנא הכניסו את הסכום:",  # תוקן מ"סכומן" ל"סכום במזומן"
             reply_markup=get_back_keyboard()
         )
     elif current_state == OrderStates.waiting_for_notes.state:
@@ -773,11 +773,3 @@ if __name__ == "__main__":
         # הפעלה במצב פולינג
         asyncio.run(main())
 
-# Remove or comment out these notes at the end of your file
-# שגיאה נוכחית:
-# "❌ אנא הכניסו מספר תקין עבור הסכומן:"
-# "❌ אנא הכניסו מספר תקין עבור הסכומן באשראי:"
-
-# תיקון:
-# "❌ אנא הכניסו מספר תקין עבור הסכומן:"
-# "❌ אנא הכניסו מספר תקין עבור הסכומן באשראי:"
