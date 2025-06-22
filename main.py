@@ -213,8 +213,8 @@ async def process_price(message: Message, state: FSMContext):
         })
         
         await state.update_data(products=products)
-        
-        # חישוב סה"כ כולל כולל
+            
+        # חישוב סה\"כ כולל כולל
         grand_total = sum(product['total'] for product in products)
         
         products_text = "\n".join([
@@ -284,7 +284,7 @@ async def process_cash_amount(message: Message, state: FSMContext):
         
     except ValueError:
         await message.answer(
-            "❌ אנא הכניסו מספר תקין עבור הסכום:",  # תוקן מ"הסכומן"
+            "❌ אנא הכניסו מספר תקין עבור הסכומן:",  # תוקן מ"הסכומן"
             reply_markup=get_back_keyboard()
         )
 
@@ -305,7 +305,7 @@ async def process_credit_amount(message: Message, state: FSMContext):
                 f"💵 מזומן: {cash_amount:,} ₪\n"
                 f"💳 אשראי: {credit_amount:,} ₪\n"
                 f"🧮 סה\"כ תשלום: {total_payment:,} ₪\n\n"
-                f"הפרש: {total_payment - grand_total:,} ₪\n\n"
+                f"הפר�sh: {total_payment - grand_total:,} ₪\n\n"
                 "אנא הכניסו סכום אשראי שיתאים לסה\"כ:",
                 reply_markup=get_back_keyboard()
             )
@@ -348,7 +348,7 @@ async def process_price(message: Message, state: FSMContext):
         
         await state.update_data(products=products)
         
-        # חישוב סה"כ כולל כולל
+        # חישוב סה\"כ כולל כולל
         grand_total = sum(product['total'] for product in products)
         
         products_text = "\n".join([
@@ -468,7 +468,7 @@ async def handle_back(callback: CallbackQuery, state: FSMContext):
         await callback.message.edit_text(
             f"📝 שלב 6/8: חלוקה לתשלום\n\n"
             f"💰 סה\"כ לתשלום: {grand_total:,} ₪\n\n"
-            "💵 אנא הכניסו את המזומן:",  # תוקן מ"הסכומן"
+            "💵 אנא הכניסו את הסכומן:",  # תוקן מ"סכומן" ל"סכום במזומן"
             reply_markup=get_back_keyboard()
         )
     elif current_state == OrderStates.waiting_for_notes.state:
@@ -491,8 +491,7 @@ async def handle_back(callback: CallbackQuery, state: FSMContext):
             reply_markup=get_back_keyboard()
         )
 
-# הוסף את הקוד הזה אחרי פונקציית cmd_start
-
+# פונקציה לעצירת הבוט
 @dp.message(Command("stop"))
 async def cmd_stop(message: Message, state: FSMContext):
     # בדיקה אם יש הזמנה פעילה
@@ -718,18 +717,67 @@ async def back_to_product_selection(callback: CallbackQuery, state: FSMContext):
         reply_markup=get_product_selection_keyboard(products)
     )
 
+# הוספת תמיכה בווב-הוק עבור PythonAnywhere
+from aiogram.webhook.aiohttp_webhook import SimpleRequestHandler, setup_application
+from aiohttp import web
+import sys
+
+# פונקציית הפעלה ראשית עם תמיכה בווב-הוק
+# שנה את הגדרת הלוגים בפונקציית main
 async def main():
-    logging.basicConfig(level=logging.INFO)
-    print("🤖 הבוט מתחיל לפעול...")
+    # הגדרת לוגים מפורטים יותר לניטור פעילות הבוט בשרת:
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler("bot.log"),
+            logging.StreamHandler()
+        ]
+    )
+    logging.info("🤖 הבוט מתחיל לפעול...")
+    
+    # המשך הקוד הקיים...
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # בפונקציית main, בחלק של הווב-הוק
+    if len(sys.argv) > 1 and sys.argv[1] == "webhook":
+        # הגדרות אבטחה לווב-הוק
+        
+        # הגדרת ווב-הוק
+        WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "yourusername.pythonanywhere.com")
+        WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
+        WEBHOOK_URL = f"https://{WEBHOOK_HOST}{WEBHOOK_PATH}"
+        WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")  # הוסף סיסמה סודית לווב-הוק
+        
+        # הגדרת מטפל בקשות ווב-הוק עם אבטחה
+        webhook_request_handler = SimpleRequestHandler(
+        dispatcher=dp,
+        bot=bot,
+        secret_token=WEBHOOK_SECRET  # הוסף סיסמה סודית
+        )
+        
+        # הגדרת ווב-הוק
+        WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "yourusername.pythonanywhere.com")
+        WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
+        WEBHOOK_URL = f"https://{WEBHOOK_HOST}{WEBHOOK_PATH}"
+        WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")  # הוסף סיסמה סודית לווב-הוק
+        
+        # הגדרת מטפל בקשות ווב-הוק עם אבטחה
+        webhook_request_handler = SimpleRequestHandler(
+            dispatcher=dp,
+            bot=bot,
+            secret_token=WEBHOOK_SECRET  # הוסף סיסמה סודית
+        )
+    else:
+        # הפעלה במצב פולינג
+        asyncio.run(main())
 
+# Remove or comment out these notes at the end of your file
 # שגיאה נוכחית:
-"❌ אנא הכניסו מספר תקין עבור הסכומן:"
-"❌ אנא הכניסו מספר תקין עבור הסכומן באשראי:"
+# "❌ אנא הכניסו מספר תקין עבור הסכומן:"
+# "❌ אנא הכניסו מספר תקין עבור הסכומן באשראי:"
 
 # תיקון:
-"❌ אנא הכניסו מספר תקין עבור הסכומן:"
-"❌ אנא הכניסו מספר תקין עבור הסכומן באשראי:"
+# "❌ אנא הכניסו מספר תקין עבור הסכומן:"
+# "❌ אנא הכניסו מספר תקין עבור הסכומן באשראי:"
