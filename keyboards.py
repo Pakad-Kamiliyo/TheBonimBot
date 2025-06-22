@@ -33,6 +33,7 @@ def get_add_product_keyboard() -> InlineKeyboardMarkup:
     """
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="➕ הוסף מוצר נוסף", callback_data="add_product")],
+        [InlineKeyboardButton(text="✏️ עריכת מוצר", callback_data="edit_order")],
         [InlineKeyboardButton(text="➡️ המשך לתשלום", callback_data="continue_payment")],
         [InlineKeyboardButton(text="⬅ חזור", callback_data="back")]
     ])

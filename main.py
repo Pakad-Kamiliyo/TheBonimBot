@@ -269,6 +269,12 @@ async def process_cash_amount(message: Message, state: FSMContext):
         cash_amount = float(message.text)
         data = await state.get_data()
         grand_total = data.get('grand_total')
+        if cash_amount > grand_total:
+            await message.answer(
+                f"❌ סכום המזומן ({cash_amount:,} ₪) לא יכול להיות גדול מהסכום הכולל ({grand_total:,} ₪). נסה שוב:",
+                reply_markup=get_back_keyboard()
+            )
+            return
         credit_amount = grand_total - cash_amount
         await state.update_data(cash_amount=cash_amount)
         await state.set_state(OrderStates.waiting_for_credit_amount)
@@ -291,9 +297,13 @@ async def process_credit_amount(message: Message, state: FSMContext):
         data = await state.get_data()
         cash_amount = data.get('cash_amount')
         grand_total = data.get('grand_total')
-        
         total_payment = cash_amount + credit_amount
-        
+        if total_payment > grand_total:
+            await message.answer(
+                f"❌ סכום המזומן והאשראי יחד ({total_payment:,} ₪) לא יכול להיות גדול מהסכום הכולל ({grand_total:,} ₪). נסה שוב:",
+                reply_markup=get_back_keyboard()
+            )
+            return
         if abs(total_payment - grand_total) > 0.01:  # טולרנס לשגיאות עיגול
             await message.answer(
                 f"❌ שגיאה בחישוב!\n\n"
@@ -306,16 +316,13 @@ async def process_credit_amount(message: Message, state: FSMContext):
                 reply_markup=get_back_keyboard()
             )
             return
-        
         await state.update_data(credit_amount=credit_amount)
         await state.set_state(OrderStates.waiting_for_notes)
-        
         await message.answer(
             "📝 שלב 7/8: הערות\n\n"
             "אנא הכניסו הערות נוספות (או שלחו 'ללא' אם אין הערות):",
             reply_markup=get_back_keyboard()
         )
-        
     except ValueError:
         await message.answer(
             "❌ אנא הכניסו מספר תקין עבור הסכום באשראי:",
