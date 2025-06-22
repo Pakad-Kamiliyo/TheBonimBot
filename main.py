@@ -719,59 +719,10 @@ async def back_to_product_selection(callback: CallbackQuery, state: FSMContext):
         reply_markup=get_product_selection_keyboard(products)
     )
 
-# הוספת תמיכה בווב-הוק עבור PythonAnywhere
-from aiogram.webhook.aiohttp_webhook import SimpleRequestHandler, setup_application
-from aiohttp import web
-import sys
-
-# פונקציית הפעלה ראשית עם תמיכה בווב-הוק
-# שנה את הגדרת הלוגים בפונקציית main
 async def main():
-    # הגדרת לוגים מפורטים יותר לניטור פעילות הבוט בשרת:
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler("bot.log"),
-            logging.StreamHandler()
-        ]
-    )
     logging.info("🤖 הבוט מתחיל לפעול...")
-    
-    # המשך הקוד הקיים...
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    # בפונקציית main, בחלק של הווב-הוק
-    if len(sys.argv) > 1 and sys.argv[1] == "webhook":
-        # הגדרות אבטחה לווב-הוק
-        
-        # הגדרת ווב-הוק
-        WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "yourusername.pythonanywhere.com")
-        WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
-        WEBHOOK_URL = f"https://{WEBHOOK_HOST}{WEBHOOK_PATH}"
-        WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")  # הוסף סיסמה סודית לווב-הוק
-        
-        # הגדרת מטפל בקשות ווב-הוק עם אבטחה
-        webhook_request_handler = SimpleRequestHandler(
-        dispatcher=dp,
-        bot=bot,
-        secret_token=WEBHOOK_SECRET  # הוסף סיסמה סודית
-        )
-        
-        # הגדרת ווב-הוק
-        WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "yourusername.pythonanywhere.com")
-        WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
-        WEBHOOK_URL = f"https://{WEBHOOK_HOST}{WEBHOOK_PATH}"
-        WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")  # הוסף סיסמה סודית לווב-הוק
-        
-        # הגדרת מטפל בקשות ווב-הוק עם אבטחה
-        webhook_request_handler = SimpleRequestHandler(
-            dispatcher=dp,
-            bot=bot,
-            secret_token=WEBHOOK_SECRET  # הוסף סיסמה סודית
-        )
-    else:
-        # הפעלה במצב פולינג
-        asyncio.run(main())
+    asyncio.run(main())
 
