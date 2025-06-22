@@ -516,7 +516,7 @@ async def show_updated_summary(message_or_callback, state: FSMContext):
     for p in products:
         summary_lines.append(f"{p['quantity']:,} - {p['type']} - {p['price']:,} ₪")
     summary_lines.append("")
-    summary_lines.append(f"סה""כ: {data.get('grand_total', 0):,} ₪")
+    summary_lines.append(f'סך הכל: {data.get("grand_total", 0):,} ₪')
     summary_lines.append("")
     summary_lines.append(f"{data.get('cash_amount', 0):,} ₪ מזומן")
     summary_lines.append(f"{data.get('credit_amount', 0):,} ₪ אשראי")
