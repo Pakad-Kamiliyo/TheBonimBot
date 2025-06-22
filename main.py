@@ -265,7 +265,6 @@ async def continue_to_payment(callback: CallbackQuery, state: FSMContext):
         reply_markup=get_back_keyboard()
     )
 
-# תיקון שגיאות כתיב בפונקציות התשלום:
 @dp.message(StateFilter(OrderStates.waiting_for_cash_amount))
 async def process_cash_amount(message: Message, state: FSMContext):
     try:
@@ -273,20 +272,17 @@ async def process_cash_amount(message: Message, state: FSMContext):
         data = await state.get_data()
         grand_total = data.get('grand_total')
         credit_amount = grand_total - cash_amount
-        
         await state.update_data(cash_amount=cash_amount)
         await state.set_state(OrderStates.waiting_for_credit_amount)
-        
         await message.answer(
             f"💵 מזומן: {cash_amount:,} ₪\n"
             f"💳 נותר לאשראי: {credit_amount:,} ₪\n\n"
             "💳 אנא הכניסו את הסכום באשראי לאישור:",
             reply_markup=get_back_keyboard()
         )
-        
     except ValueError:
         await message.answer(
-            "❌ אנא הכניסו מספר תקין עבור הסכום:",  # תוקן מ"הסכומן"
+            "❌ אנא הכניסו מספר תקין עבור הסכום במזומן:",
             reply_markup=get_back_keyboard()
         )
 
@@ -328,188 +324,27 @@ async def process_credit_amount(message: Message, state: FSMContext):
             reply_markup=get_back_keyboard()
         )
 
-# תיקון אימוגי מחיר:
-@dp.message(StateFilter(OrderStates.waiting_for_price))
-async def process_price(message: Message, state: FSMContext):
-    try:
-        price = float(message.text)
-        data = await state.get_data()
-        
-        product_type = data.get('current_product_type')
-        quantity = data.get('current_quantity')
-        total_price = quantity * price
-        
-        # הוספת המוצר לרשימה
-        products = data.get('products', [])
-        products.append({
-            'type': product_type,
-            'quantity': quantity,
-            'price': price,
-            'total': total_price
-        })
-        
-        await state.update_data(products=products)
-        
-        # חישוב סה\"כ כולל כולל
-        grand_total = sum(product['total'] for product in products)
-        
-        products_text = "\n".join([
-            f"• {p['type']}: {p['quantity']:,} × {p['price']:,} = {p['total']:,} ₪"
-            for p in products
-        ])
-        
-        await message.answer(
-            f"✅ המוצר נוסף בהצלחה!\n\n"
-            f"📋 רשימת מוצרים עד כה:\n{products_text}\n\n"
-            f"💰 סה\"כ כולל: {grand_total:,} ₪\n\n"
-            "האם אתם מאשרים את הזמנה?",
-            reply_markup=get_add_product_keyboard()
-        )
-        
-    except ValueError:
-        await message.answer(
-            "❌ אנא הכניסו מספר תקין עבור המחיר:",
-            reply_markup=get_back_keyboard()
-        )
+@dp.message(StateFilter(OrderStates.waiting_for_notes))
+async def process_notes(message: Message, state: FSMContext):
+    notes = message.text.strip()
+    await state.update_data(notes=notes)
+    await show_updated_summary(message, state)
 
-# תיקון הודעת מחיר:
-@dp.message(StateFilter(OrderStates.waiting_for_quantity))
-async def process_quantity(message: Message, state: FSMContext):
-    try:
-        quantity = int(message.text)
-        await state.update_data(current_quantity=quantity)
-        await state.set_state(OrderStates.waiting_for_price)
-        
-        data = await state.get_data()
-        product_type = data.get('current_product_type')
-        
-        await message.answer(
-            f"📦 מוצר: {product_type}\n"
-            f"📊 כמות: {quantity:,}\n\n"
-            "💰 הכניסו את המחיר ליחידה (מספר):",  # תוקן מ🐌 ל💰
-            reply_markup=get_back_keyboard()
-        )
-    except ValueError:
-        await message.answer(
-            "❌ אנא הכניסו מספר תקין עבור הכמות:",
-            reply_markup=get_back_keyboard()
-        )
-
-# תיקון הודעת חזרה:
-@dp.callback_query(F.data == "back")
-async def handle_back(callback: CallbackQuery, state: FSMContext):
-    await callback.answer()
-    current_state = await state.get_state()
-    
-    if current_state == OrderStates.waiting_for_nickname.state:
-        await state.clear()
-        await callback.message.edit_text(
-            "🛒 ברוכים הבאים לבוט הזמנות!\n\n"  # הוסר "ה" מיותר
-            "לחצו על הכפתור למטה כדי להתחיל הזמנה חדשה:",
-            reply_markup=get_start_keyboard()
-        )
-    elif current_state == OrderStates.waiting_for_username.state:
-        await state.set_state(OrderStates.waiting_for_nickname)
-        await callback.message.edit_text(
-            "📝 שלב 1/8: הכנסת כינוי\n\n"
-            "אנא הכניסו את הכינוי שלכם:",
-            reply_markup=get_back_keyboard()
-        )
-    elif current_state == OrderStates.waiting_for_address.state:
-        await state.set_state(OrderStates.waiting_for_username)
-        await callback.message.edit_text(
-            "📝 שלב 2/8: שם משתמש טלגרם\n\n"
-            "אנא הכניסו את שם המשתמש שלכם בטלגרם (לדוגמה: @example):",
-            reply_markup=get_back_keyboard()
-        )
-    elif current_state == OrderStates.waiting_for_product_type.state:
-        await state.set_state(OrderStates.waiting_for_address)
-        await callback.message.edit_text(
-            "📝 שלב 3/8: כתובת\n\n"
-            "אנא הכניסו את הכתובת שלכם:",
-            reply_markup=get_back_keyboard()
-        )
-    elif current_state == OrderStates.waiting_for_quantity.state:
-        await state.set_state(OrderStates.waiting_for_product_type)
-        await callback.message.edit_text(
-            "📝 שלב 4/8: הוספת מוצרים\n\n"
-            "אנא הכניסו את סוג המוצר הראשון:",
-            reply_markup=get_back_keyboard()
-        )
-    elif current_state == OrderStates.waiting_for_price.state:
-        await state.set_state(OrderStates.waiting_for_quantity)
-        data = await state.get_data()
-        product_type = data.get('current_product_type')
-        await callback.message.edit_text(
-            f"📦 מוצר: {product_type}\n\n"
-            "💯 הכנס את הכמות (מספר):",
-            reply_markup=get_back_keyboard()
-        )
-    elif current_state == OrderStates.waiting_for_cash_amount.state:
-        # חזרה לשלב הוספת מוצרים
-        data = await state.get_data()
-        products = data.get('products', [])
-        grand_total = sum(product['total'] for product in products)
-        
-        products_text = "\n".join([
-            f"• {p['type']}: {p['quantity']:,} × {p['price']:,} = {p['total']:,} ₪"
-            for p in products
-        ])
-        
-        await callback.message.edit_text(
-            f"✅ המוצר נוסף בהצלחה!\n\n"
-            f"📋 רשימת מוצרים עד כה:\n{products_text}\n\n"
-            f"💰 סה\"כ כולל: {grand_total:,} ₪\n\n"
-            "האם אתם מאשרים את הזמנה?",
-            reply_markup=get_add_product_keyboard()
-        )
-    elif current_state == OrderStates.waiting_for_credit_amount.state:
-        await state.set_state(OrderStates.waiting_for_cash_amount)
-        data = await state.get_data()
-        grand_total = data.get('grand_total')
-        await callback.message.edit_text(
-            f"📝 שלב 6/8: חלוקה לתשלום\n\n"
-            f"💰 סה\"כ לתשלום: {grand_total:,} ₪\n\n"
-            "💵 אנא הכניסו את הסכום:",  # תוקן מ"סכומן" ל"סכום במזומן"
-            reply_markup=get_back_keyboard()
-        )
-    elif current_state == OrderStates.waiting_for_notes.state:
-        await state.set_state(OrderStates.waiting_for_credit_amount)
-        data = await state.get_data()
-        cash_amount = data.get('cash_amount')
-        grand_total = data.get('grand_total')
-        credit_amount = grand_total - cash_amount
-        await callback.message.edit_text(
-            f"💵 מזומן: {cash_amount:,} ₪\n"
-            f"💳 נותר לאשראי: {credit_amount:,} ₪\n\n"
-            "💳 אנא הכניסו את הסכום באשראי לאישור:",
-            reply_markup=get_back_keyboard()
-        )
-    elif current_state == OrderStates.showing_summary.state:
-        await state.set_state(OrderStates.waiting_for_notes)
-        await callback.message.edit_text(
-            "📝 שלב 7/8: הערות\n\n"
-            "אנא הכניסו הערות נוספות (או שלחו 'ללא' אם אין הערות):",
-            reply_markup=get_back_keyboard()
-        )
-
-# פונקציה לעצירת הבוט
 @dp.message(Command("stop"))
 async def cmd_stop(message: Message, state: FSMContext):
-    # בדיקה אם יש הזמנה פעילה
-    current_state = await state.get_state()
-    if current_state is None:
-        await message.answer(
-            "❌ אין הזמנה פעילה לביטול.\n\n"
-            "תוכלו להתחיל הזמנה חדשה עם /start"
-        )
-        return
-    
-    # ביטול הזמנה
     await state.clear()
     await message.answer(
-        "❌ הזמנה בוטלה.\n\n"
-        "תוכלו להתחיל הזמנה חדשה בכל עת עם /start"
+        "❌ ההזמנה בוטלה.\n\nתוכלו להתחיל הזמנה חדשה בכל עת עם /start"
+    )
+
+@dp.message(Command("help"))
+async def cmd_help(message: Message, state: FSMContext):
+    await message.answer(
+        "🤖 עזרה לבוט הזמנות:\n\n"
+        "/start - התחלת הזמנה חדשה\n"
+        "/stop - ביטול הזמנה נוכחית\n"
+        "/help - הצגת הודעה זו\n\n"
+        "לשאלות נוספות, אנא פנו למנהל המערכת."
     )
 
 @dp.callback_query(F.data == "edit_order")
