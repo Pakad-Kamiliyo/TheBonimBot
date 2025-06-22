@@ -500,7 +500,6 @@ async def show_updated_summary(message_or_callback, state: FSMContext):
     """מציג את הסיכום המעודכן אחרי עריכה"""
     data = await state.get_data()
     global order_counter
-    
     products = data.get('products', [])
     products_text = "\n".join([
         f"מוצר:: {p['type']}\n"
@@ -509,7 +508,6 @@ async def show_updated_summary(message_or_callback, state: FSMContext):
         f"סה\"כ:: {p['total']:,}\n"
         for p in products
     ])
-    
     summary = (
         f"🧾 בון מספר #{order_counter}\n"
         f"כינוי:: {data.get('nickname')}\n"
@@ -519,21 +517,27 @@ async def show_updated_summary(message_or_callback, state: FSMContext):
         f"💰 סה\"כ כולל:: {data.get('grand_total'):,} ₪\n"
         f"תשלום:: {data.get('cash_amount'):,} מזומן 🟩, {data.get('credit_amount'):,} אשראי 🟥\n"
     )
-    
     notes = data.get('notes')
     if notes:
         summary += f"הערה:: {notes}\n"
-    
     await state.update_data(final_summary=summary)
     await state.set_state(OrderStates.showing_summary)
-    
     text = f"📝 שלב 8/8: סיכום הזמנה (מעודכן)\n\n{summary}\n" \
            "האם אתם מאשרים את הזמנה?"
-    
-    if hasattr(message_or_callback, 'edit_text'):
+    # טיפול נכון בסוג האובייקט
+    if hasattr(message_or_callback, 'edit_text') and callable(getattr(message_or_callback, 'edit_text', None)):
         await message_or_callback.edit_text(text, reply_markup=get_summary_keyboard())
-    else:
+    elif hasattr(message_or_callback, 'answer') and callable(getattr(message_or_callback, 'answer', None)):
         await message_or_callback.answer(text, reply_markup=get_summary_keyboard())
+    else:
+        # fallback: שלח הודעה חדשה
+        chat_id = None
+        if hasattr(message_or_callback, 'chat'):
+            chat_id = message_or_callback.chat.id
+        elif hasattr(message_or_callback, 'message') and hasattr(message_or_callback.message, 'chat'):
+            chat_id = message_or_callback.message.chat.id
+        if chat_id:
+            await bot.send_message(chat_id, text, reply_markup=get_summary_keyboard())
 
 @dp.callback_query(F.data == "back_to_summary")
 async def back_to_summary(callback: CallbackQuery, state: FSMContext):
