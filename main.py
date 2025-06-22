@@ -509,7 +509,7 @@ async def show_updated_summary(message_or_callback, state: FSMContext):
     products = data.get('products', [])
     # תבנית חדשה
     summary_lines = [
-        f"בון #{order_counter}",
+        f"<b>בון #{order_counter}</b>",
         f"{data.get('nickname', '')} - {data.get('username', '')} - {data.get('address', '')}",
         ""
     ]
@@ -518,12 +518,12 @@ async def show_updated_summary(message_or_callback, state: FSMContext):
     summary_lines.append("")
     summary_lines.append(f'סך הכל: {data.get("grand_total", 0):,} ₪')
     summary_lines.append("")
-    summary_lines.append(f"{data.get('cash_amount', 0):,} ₪ מזומן")
-    summary_lines.append(f"{data.get('credit_amount', 0):,} ₪ אשראי")
+    summary_lines.append(f'{data.get("cash_amount", 0):,} ₪ מזומן 🟩')
+    summary_lines.append(f'{data.get("credit_amount", 0):,} ₪ אשראי 🟥')
     summary = "\n".join(summary_lines)
     notes = data.get('notes')
     if notes and notes.strip() and notes.strip() != 'ללא':
-        summary += f"\n\nהערה: {notes.strip()}"
+        summary += f"\n\n<b>הערה:</b> {notes.strip()}"
     await state.update_data(final_summary=summary)
     await state.set_state(OrderStates.showing_summary)
     text = f"📝 שלב 8/8: סיכום הזמנה (מעודכן)\n\n{summary}\n\nהאם אתם מאשרים את הזמנה?"
