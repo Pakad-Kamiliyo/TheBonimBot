@@ -169,7 +169,7 @@ async def process_product_type(message: Message, state: FSMContext):
     await state.set_state(OrderStates.waiting_for_quantity)
     await message.answer(
         f"📦 מוצר: {message.text}\n\n"
-        "💯 הכנס את הכמות (מספר):",
+        "🧮 הכנס את הכמות (מספר):",
         reply_markup=get_back_keyboard()
     )
 
@@ -179,14 +179,12 @@ async def process_quantity(message: Message, state: FSMContext):
         quantity = int(message.text)
         await state.update_data(current_quantity=quantity)
         await state.set_state(OrderStates.waiting_for_price)
-        
         data = await state.get_data()
         product_type = data.get('current_product_type')
-        
         await message.answer(
             f"📦 מוצר: {product_type}\n"
-            f"📊 כמות: {quantity:,}\n\n"
-            "🐌 הכניסו את המחיר ליחידה (מספר):",
+            f"🧮 כמות: {quantity:,}\n\n"
+            "💲 הכנס את המחיר ליחידה (מספר):",
             reply_markup=get_back_keyboard()
         )
     except ValueError:
