@@ -522,14 +522,22 @@ async def show_updated_summary(message_or_callback, state: FSMContext):
         summary += f"הערה:: {notes}\n"
     await state.update_data(final_summary=summary)
     await state.set_state(OrderStates.showing_summary)
-    text = f"📝 שלב 8/8: סיכום הזמנה (מעודכן)\n\n{summary}\n" \
-           "האם אתם מאשרים את הזמנה?"
-    # טיפול נכון בסוג האובייקט
-    if hasattr(message_or_callback, 'edit_text') and callable(getattr(message_or_callback, 'edit_text', None)):
-        await message_or_callback.edit_text(text, reply_markup=get_summary_keyboard())
-    elif hasattr(message_or_callback, 'answer') and callable(getattr(message_or_callback, 'answer', None)):
-        await message_or_callback.answer(text, reply_markup=get_summary_keyboard())
-    else:
+    text = f"📝 שלב 8/8: סיכום הזמנה (מעודכן)\n\n{summary}\nהאם אתם מאשרים את הזמנה?"
+    reply_markup = get_summary_keyboard()
+    try:
+        if hasattr(message_or_callback, 'edit_text') and callable(getattr(message_or_callback, 'edit_text', None)):
+            await message_or_callback.edit_text(text, reply_markup=reply_markup)
+        elif hasattr(message_or_callback, 'answer') and callable(getattr(message_or_callback, 'answer', None)):
+            await message_or_callback.answer(text, reply_markup=reply_markup)
+        else:
+            chat_id = None
+            if hasattr(message_or_callback, 'chat'):
+                chat_id = message_or_callback.chat.id
+            elif hasattr(message_or_callback, 'message') and hasattr(message_or_callback.message, 'chat'):
+                chat_id = message_or_callback.message.chat.id
+            if chat_id:
+                await bot.send_message(chat_id, text, reply_markup=reply_markup)
+    except Exception as e:
         # fallback: שלח הודעה חדשה
         chat_id = None
         if hasattr(message_or_callback, 'chat'):
@@ -537,7 +545,7 @@ async def show_updated_summary(message_or_callback, state: FSMContext):
         elif hasattr(message_or_callback, 'message') and hasattr(message_or_callback.message, 'chat'):
             chat_id = message_or_callback.message.chat.id
         if chat_id:
-            await bot.send_message(chat_id, text, reply_markup=get_summary_keyboard())
+            await bot.send_message(chat_id, text, reply_markup=reply_markup)
 
 @dp.callback_query(F.data == "back_to_summary")
 async def back_to_summary(callback: CallbackQuery, state: FSMContext):
