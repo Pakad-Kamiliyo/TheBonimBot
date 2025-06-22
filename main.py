@@ -15,7 +15,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Message, CallbackQuery, ChatMemberUpdated
 from keyboards import (
     get_start_keyboard, get_back_keyboard, get_add_product_keyboard,
-    get_summary_keyboard, get_product_selection_keyboard
+    get_summary_keyboard, get_product_selection_keyboard, get_edit_action_keyboard
 )
 from states import OrderStates
 
@@ -57,7 +57,7 @@ storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 
 # מונה הזמנות גלובלי
-order_counter = 0
+order_counter = 1
 # רשימת קבוצות פעילות
 active_groups = set()
 
@@ -563,6 +563,21 @@ async def back_to_product_selection(callback: CallbackQuery, state: FSMContext):
         "📝 בחר מוצר לעריכה:",
         reply_markup=get_product_selection_keyboard(products)
     )
+
+@dp.callback_query(F.data == "confirm_order")
+async def confirm_order(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    data = await state.get_data()
+    global order_counter
+    summary = data.get('final_summary')
+    if not summary:
+        await callback.message.answer("❌ לא נמצא סיכום הזמנה. אנא נסה שוב.")
+        return
+    # שלח את הבון כהודעה חדשה
+    await callback.message.answer(f"✅ ההזמנה אושרה!\n\n{summary}")
+    order_counter += 1
+    await state.clear()
+    await callback.message.answer("תודה על ההזמנה! ניתן להתחיל הזמנה חדשה עם /start")
 
 async def main():
     logging.info("🤖 הבוט מתחיל לפעול...")
