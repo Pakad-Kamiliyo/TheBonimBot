@@ -504,32 +504,29 @@ async def process_edited_price(message: Message, state: FSMContext):
         )
 
 async def show_updated_summary(message_or_callback, state: FSMContext):
-    """מציג את הסיכום המעודכן אחרי עריכה"""
     data = await state.get_data()
     global order_counter
     products = data.get('products', [])
-    products_text = "\n".join([
-        f"מוצר:: {p['type']}\n"
-        f"כמות:: {p['quantity']:,}\n"
-        f"מחיר ליחידה:: {p['price']:,}\n"
-        f"סה\"כ:: {p['total']:,}\n"
-        for p in products
-    ])
-    summary = (
-        f"🧾 בון מספר #{order_counter}\n"
-        f"כינוי:: {data.get('nickname')}\n"
-        f"יוזר:: {data.get('username')}\n"
-        f"כתובת:: {data.get('address')}\n\n"
-        f"{products_text}\n"
-        f"💰 סה\"כ כולל:: {data.get('grand_total'):,} ₪\n"
-        f"תשלום:: {data.get('cash_amount'):,} מזומן 🟩, {data.get('credit_amount'):,} אשראי 🟥\n"
-    )
+    # תבנית חדשה
+    summary_lines = [
+        f"בון #{order_counter}",
+        f"{data.get('nickname', '')} - {data.get('username', '')} - {data.get('address', '')}",
+        ""
+    ]
+    for p in products:
+        summary_lines.append(f"{p['quantity']:,} - {p['type']} - {p['price']:,} ₪")
+    summary_lines.append("")
+    summary_lines.append(f"סה""כ: {data.get('grand_total', 0):,} ₪")
+    summary_lines.append("")
+    summary_lines.append(f"{data.get('cash_amount', 0):,} ₪ מזומן")
+    summary_lines.append(f"{data.get('credit_amount', 0):,} ₪ אשראי")
+    summary = "\n".join(summary_lines)
     notes = data.get('notes')
-    if notes:
-        summary += f"הערה:: {notes}\n"
+    if notes and notes.strip() and notes.strip() != 'ללא':
+        summary += f"\n\nהערה: {notes.strip()}"
     await state.update_data(final_summary=summary)
     await state.set_state(OrderStates.showing_summary)
-    text = f"📝 שלב 8/8: סיכום הזמנה (מעודכן)\n\n{summary}\nהאם אתם מאשרים את הזמנה?"
+    text = f"📝 שלב 8/8: סיכום הזמנה (מעודכן)\n\n{summary}\n\nהאם אתם מאשרים את הזמנה?"
     reply_markup = get_summary_keyboard()
     try:
         if hasattr(message_or_callback, 'edit_text') and callable(getattr(message_or_callback, 'edit_text', None)):
@@ -545,7 +542,6 @@ async def show_updated_summary(message_or_callback, state: FSMContext):
             if chat_id:
                 await bot.send_message(chat_id, text, reply_markup=reply_markup)
     except Exception as e:
-        # fallback: שלח הודעה חדשה
         chat_id = None
         if hasattr(message_or_callback, 'chat'):
             chat_id = message_or_callback.chat.id
