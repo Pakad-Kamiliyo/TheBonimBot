@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-def get_start_keyboard():
+def get_start_keyboard() -> InlineKeyboardMarkup:
     """
     יוצר מקלדת עם כפתור התחלת הזמנה.
     
@@ -12,7 +12,7 @@ def get_start_keyboard():
     ])
     return keyboard
 
-def get_back_keyboard():
+def get_back_keyboard() -> InlineKeyboardMarkup:
     """
     יוצר מקלדת עם כפתור חזרה.
     
@@ -24,7 +24,7 @@ def get_back_keyboard():
     ])
     return keyboard
 
-def get_add_product_keyboard():
+def get_add_product_keyboard() -> InlineKeyboardMarkup:
     """
     יוצר מקלדת עם אפשרויות הוספת מוצר, המשך לתשלום וחזרה.
     
@@ -38,7 +38,7 @@ def get_add_product_keyboard():
     ])
     return keyboard
 
-def get_summary_keyboard():
+def get_summary_keyboard() -> InlineKeyboardMarkup:
     """
     יוצר מקלדת עם אפשרויות אישור, עריכה וביטול הזמנה.
     
@@ -52,7 +52,7 @@ def get_summary_keyboard():
     ])
     return keyboard
 
-def get_product_selection_keyboard(products):
+def get_product_selection_keyboard(products: list) -> InlineKeyboardMarkup:
     """
     יוצר מקלדת לבחירת מוצר לעריכה.
     
@@ -71,7 +71,7 @@ def get_product_selection_keyboard(products):
     keyboard.append([InlineKeyboardButton(text="⬅ חזור לסיכום", callback_data="back_to_summary")])
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
-def get_edit_action_keyboard():
+def get_edit_action_keyboard() -> InlineKeyboardMarkup:
     """
     יוצר מקלדת לבחירת פעולת עריכה.
     
@@ -85,7 +85,7 @@ def get_edit_action_keyboard():
     ])
     return keyboard
 
-def get_back_and_continue_keyboard():
+def get_back_and_continue_keyboard() -> InlineKeyboardMarkup:
     """
     יוצר מקלדת עם אפשרויות המשך וחזרה.
     

@@ -34,12 +34,20 @@ from keyboards import (
 
 import os
 
+# הגדרת משתנה גלובלי למספר קבוצות מקסימלי
+MAX_ACTIVE_GROUPS = 1  # שנה ערך זה כדי לאפשר יותר קבוצות בו זמנית
 
 # הכנס כאן את הטוקן של הבוט שלך
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 if not BOT_TOKEN or BOT_TOKEN == 'YOUR_BOT_TOKEN_HERE':
     raise ValueError("❌ לא הוגדר טוקן בוט! אנא הגדירו את משתנה הסביבה BOT_TOKEN")
+
+# הגדרת לוגים מפורטים יותר לניטור פעילות הבוט בשרת:
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 bot = Bot(
     token=BOT_TOKEN,
@@ -54,10 +62,9 @@ order_counter = 0
 active_groups = set()
 
 @dp.my_chat_member()
-async def on_chat_member_updated(update: ChatMemberUpdated):
+async def on_chat_member_updated(update: ChatMemberUpdated) -> None:
     """מטפל בעדכוני חברות בצ'אט, כולל הסרת הבוט מקבוצה"""
     chat_id = update.chat.id
-    
     # בדיקה אם הבוט הוסר מהקבוצה
     if update.new_chat_member.status in ["left", "kicked"]:
         if chat_id in active_groups:
@@ -65,13 +72,11 @@ async def on_chat_member_updated(update: ChatMemberUpdated):
             logging.info(f"הבוט הוסר מקבוצה {chat_id}. הקבוצה הוסרה מרשימת הקבוצות הפעילות.")
 
 # פונקציה לבדיקת הגבלת קבוצה
-async def check_group_limit(message_or_callback):
+async def check_group_limit(message_or_callback) -> bool:
     """
     בודק אם הקבוצה עומדת במגבלת הקבוצות הפעילות.
-    
     Args:
         message_or_callback: הודעה או קולבק מהמשתמש
-        
     Returns:
         bool: האם הקבוצה עומדת במגבלה
     """
@@ -82,24 +87,21 @@ async def check_group_limit(message_or_callback):
     else:
         chat_id = message_or_callback.chat.id
         chat_type = message_or_callback.chat.type
-    
     # אם זה צ'אט פרטי, אפשר תמיד
     if chat_type == ChatType.PRIVATE:
         return True
-    
-    # בדיקת מגבלת קבוצות (מקסימום קבוצה אחת פעילה)
+    # בדיקת מגבלת קבוצות (מקסימום קבוצות פעילות)
     if chat_id not in active_groups:
-        if len(active_groups) >= 1:
+        if len(active_groups) >= MAX_ACTIVE_GROUPS:
             if hasattr(message_or_callback, 'message'):
-                await message_or_callback.answer("❌ הבוט כבר פעיל בקבוצה אחרת. אנא נסו מאוחר יותר.")
+                await message_or_callback.answer("❌ הבוט כבר פעיל במספר קבוצות מירבי. אנא נסו מאוחר יותר.")
             else:
                 await message_or_callback.answer(
-                    "❌ הבוט כבר פעיל בקבוצה אחרת. אנא נסו מאוחר יותר.",
+                    "❌ הבוט כבר פעיל במספר קבוצות מירבי. אנא נסו מאוחר יותר.",
                     reply_markup=get_start_keyboard()
                 )
             return False
         active_groups.add(chat_id)
-    
     return True
 
 
@@ -305,7 +307,7 @@ async def process_credit_amount(message: Message, state: FSMContext):
                 f"💵 מזומן: {cash_amount:,} ₪\n"
                 f"💳 אשראי: {credit_amount:,} ₪\n"
                 f"🧮 סה\"כ תשלום: {total_payment:,} ₪\n\n"
-                f"הפר�sh: {total_payment - grand_total:,} ₪\n\n"
+                f"הפרש: {total_payment - grand_total:,} ₪\n\n"
                 "אנא הכניסו סכום אשראי שיתאים לסה\"כ:",
                 reply_markup=get_back_keyboard()
             )
